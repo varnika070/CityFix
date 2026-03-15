@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const {
   createComplaint, getComplaints, getComplaintById,
-  updateStatus, assignComplaint, submitFeedback, deleteComplaint,
+  updateStatus, assignComplaint, submitFeedback, deleteComplaint,adminDeleteComplaint,
 } = require("../controllers/complaintController");
 const { protect, authorize } = require("../middleware/auth");
 
@@ -24,5 +24,5 @@ router.route("/:id")
 router.put("/:id/status", protect, authorize("staff", "admin"), updateStatus);
 router.put("/:id/assign", protect, authorize("admin"), assignComplaint);
 router.post("/:id/feedback", protect, authorize("citizen"), submitFeedback);
-
+router.delete("/admin/:id", protect, authorize("admin"), adminDeleteComplaint);
 module.exports = router;

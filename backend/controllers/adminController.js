@@ -62,3 +62,45 @@ exports.toggleUserStatus = async (req, res, next) => {
     res.json({ success: true, message: `User ${user.isActive ? "activated" : "deactivated"}` });
   } catch (err) { next(err); }
 };
+exports.deleteUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Prevent deleting yourself
+    if (user._id.toString() === req.user._id.toString()) {
+      return res.status(400).json({ success: false, message: "Cannot delete your own account" });
+    }
+
+    // Prevent deleting other admins
+    if (user.role === "admin") {
+      return res.status(400).json({ success: false, message: "Cannot delete another admin account" });
+    }
+
+    user.isActive = false;
+    await user.save();
+    res.json({ success: true, message: `User ${user.name} has been deactivated` });
+  } catch (err) { next(err); }
+};
+
+// Hard delete user — permanently removes user and their complaints
+exports.hardDeleteUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user._id.toString() === req.user._id.toString()) {
+      return res.status(400).json({ success: false, message: "Cannot delete your own account" });
+    }
+
+    if (user.role === "admin") {
+      return res.status(400).json({ success: false, message: "Cannot delete an admin account" });
+    }
+
+    // Delete all complaints filed by this user
+    await Complaint.deleteMany({ citizen: req.params.id });
+
+    await user.deleteOne();
+    res.json({ success: true, message: `User and all their complaints permanently deleted` });
+  } catch (err) { next(err); }
+};

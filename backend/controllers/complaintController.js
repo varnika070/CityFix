@@ -134,3 +134,46 @@ exports.deleteComplaint = async (req, res, next) => {
     res.json({ success: true, message: "Complaint deleted" });
   } catch (err) { next(err); }
 };
+// @DELETE /api/complaints/:id  — Citizen deletes own pending complaint
+exports.deleteComplaint = async (req, res, next) => {
+  try {
+    const complaint = await Complaint.findById(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({ success: false, message: "Complaint not found" });
+    }
+
+    // Only the citizen who filed it can delete
+    if (complaint.citizen.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: "Not authorized to delete this complaint" });
+    }
+
+    // Can only delete if still pending
+    if (complaint.status !== "pending") {
+      return res.status(400).json({ success: false, message: "Only pending complaints can be deleted" });
+    }
+
+    await complaint.deleteOne();
+
+    res.json({ success: true, message: "Complaint deleted successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @DELETE /api/complaints/admin/:id  — Admin force deletes any complaint
+exports.adminDeleteComplaint = async (req, res, next) => {
+  try {
+    const complaint = await Complaint.findById(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({ success: false, message: "Complaint not found" });
+    }
+
+    await complaint.deleteOne();
+
+    res.json({ success: true, message: "Complaint permanently deleted by admin" });
+  } catch (err) {
+    next(err);
+  }
+};
