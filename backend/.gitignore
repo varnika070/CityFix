@@ -1,0 +1,7 @@
+.env
+# Environment variables for CityFix backend
+
+package.json
+uploads
+node_modules
+package-lock.json
